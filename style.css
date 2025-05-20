@@ -31,3 +31,21 @@ h1 {
     margin: 0 auto;
     font-family: 'Montserrat', 'Arial Black', 'Arial', sans-serif;
 }
+
+#level-message {
+    display: none;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    text-align: center;
+    font-size: 3em;
+    font-family: 'Montserrat', Arial Black, Arial, sans-serif;
+    color: #ff0;
+    text-shadow: 0 0 16px #000, 0 0 8px #0ff;
+    z-index: 10;
+    pointer-events: none;
+    letter-spacing: 2px;
+    font-weight: 900;
+}

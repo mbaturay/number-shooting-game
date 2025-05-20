@@ -31,26 +31,55 @@ class FallingNumber {
     }
 }
 
-let fallingNumbers = [new FallingNumber()];
+let fallingNumbers = [];
+
 let selectedNumber = 1;
 let misses = 0;
+let score = 0;
+let lives = 3;
+let level = 1;
+let hitsThisLevel = 0;
+let showLevelMessage = false;
+let levelMessage = '';
+let levelMessageTimer = 0;
+const MAX_LEVEL = 10;
+
+function getFallSpeed() {
+    // Start very slow and increase gently per level
+    // Level 1: 0.3, Level 2: 0.4, Level 3: 0.5, ... Level 10: 1.2
+    return 0.2 + level * 0.1;
+}
+
+function updateStats() {
+    document.getElementById('score').textContent = `Score: ${score}`;
+    document.getElementById('lives').textContent = `Lives: ${lives}`;
+}
 
 function spawnNewNumber() {
-    fallingNumbers.push(new FallingNumber());
+    const num = new FallingNumber();
+    // Always use getFallSpeed() for all numbers, including level 1
+    num.speed = getFallSpeed();
+    fallingNumbers.push(num);
 }
 
 function removeNumber(index) {
     fallingNumbers.splice(index, 1);
 }
 
+function showLevelUpMessage() {
+    showLevelMessage = true;
+    levelMessage = `LEVEL ${level} START!`;
+    levelMessageTimer = 120; // ~2 seconds at 60fps
+}
+
 document.addEventListener('keydown', (e) => {
-    if (e.code === 'ShiftRight') {
+    if (e.key === 'j' || e.key === 'J') {
         if (selectedNumber < 9) {
             selectedNumber++;
         } else {
             selectedNumber = 1;
         }
-    } else if (e.code === 'ShiftLeft') {
+    } else if (e.key === 'd' || e.key === 'D') {
         if (selectedNumber > 1) {
             selectedNumber--;
         } else {
@@ -62,6 +91,17 @@ document.addEventListener('keydown', (e) => {
         for (let i = 0; i < fallingNumbers.length; i++) {
             if (fallingNumbers[i].value === selectedNumber) {
                 removeNumber(i);
+                score++;
+                hitsThisLevel++;
+                updateStats();
+                // Level up logic
+                if (hitsThisLevel >= 5 && level < MAX_LEVEL) {
+                    level++;
+                    hitsThisLevel = 0;
+                    // Do NOT update speed for existing numbers
+                    showLevelUpMessage();
+                    spawnInterval = getSpawnInterval(); // update spawn interval on level up
+                }
                 found = true;
                 break;
             }
@@ -73,7 +113,11 @@ document.addEventListener('keydown', (e) => {
 });
 
 let spawnTimer = 0;
-let spawnInterval = 120; // frames (about 2 seconds at 60fps)
+function getSpawnInterval() {
+    // Start at 300 (5s), decrease by 25 frames per level, min 100 (about 1.6s)
+    return Math.max(300 - (level - 1) * 25, 100);
+}
+let spawnInterval = getSpawnInterval();
 
 function gameLoop() {
     ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
@@ -85,6 +129,8 @@ function gameLoop() {
         num.draw(ctx);
         if (num.y > GAME_HEIGHT + 40) {
             misses++;
+            lives--;
+            updateStats();
             removeNumber(i);
         }
     }
@@ -97,9 +143,28 @@ function gameLoop() {
     ctx.font = 'bold 20px Montserrat, Arial Black, Arial, sans-serif';
     ctx.fillStyle = '#0ff';
     ctx.fillText(`Misses: ${misses}`, 10, 30);
+    ctx.fillStyle = '#0f0';
+    ctx.fillText(`Level: ${level}`, 10, 60);
+    ctx.fillStyle = '#0ff';
+    ctx.fillText(`Hits: ${hitsThisLevel}/5`, 10, 90);
+
+    // Show level message
+    if (showLevelMessage && levelMessageTimer > 0) {
+        const msgDiv = document.getElementById('level-message');
+        if (msgDiv) {
+            msgDiv.textContent = levelMessage;
+            msgDiv.style.display = 'block';
+        }
+        levelMessageTimer--;
+        if (levelMessageTimer <= 0) {
+            showLevelMessage = false;
+            if (msgDiv) msgDiv.style.display = 'none';
+        }
+    }
 
     // Spawn new number at interval
     spawnTimer++;
+    spawnInterval = getSpawnInterval();
     if (spawnTimer >= spawnInterval) {
         spawnNewNumber();
         spawnTimer = 0;
@@ -108,4 +173,10 @@ function gameLoop() {
     requestAnimationFrame(gameLoop);
 }
 
+// At the start of the game, spawn the first number with correct speed:
+fallingNumbers.push(new FallingNumber());
+fallingNumbers[0].speed = getFallSpeed();
+
+updateStats();
+showLevelUpMessage();
 gameLoop();
