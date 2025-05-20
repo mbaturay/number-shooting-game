@@ -208,9 +208,13 @@ document.addEventListener('keydown', (e) => {
             updateStats();
             requestAnimationFrame(gameLoop);
         } else {
+            // Clear all remaining numbers before starting the countdown
+            fallingNumbers = [];
             countdownActive = true;
             startCountdown(() => {
                 countdownActive = false;
+                // After countdown, spawn a new number to start fresh
+                spawnNewNumber();
                 requestAnimationFrame(gameLoop);
             });
         }
@@ -306,7 +310,9 @@ function gameLoop() {
             lives--;
             updateStats();
             playMissSound();
-            removeNumber(i);
+            
+            // Clear all falling numbers, not just the missed one
+            fallingNumbers = [];
             
             // Show Miss label and wait for key press
             waitingForContinue = true;
