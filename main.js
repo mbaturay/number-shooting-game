@@ -18,7 +18,7 @@ class FallingNumber {
         this.value = getRandomNumber();
         this.x = Math.random() * (GAME_WIDTH - 40) + 20; // keep inside canvas
         this.y = -40;
-        this.speed = 2;
+        this.speed = 0.7; // much slower speed
     }
     update() {
         this.y += this.speed;
@@ -31,13 +31,16 @@ class FallingNumber {
     }
 }
 
-let fallingNumber = new FallingNumber();
-let selectedNumber = 0;
+let fallingNumbers = [new FallingNumber()];
+let selectedNumber = 1;
 let misses = 0;
 
 function spawnNewNumber() {
-    fallingNumber = new FallingNumber();
-    // selectedNumber is no longer reset here
+    fallingNumbers.push(new FallingNumber());
+}
+
+function removeNumber(index) {
+    fallingNumbers.splice(index, 1);
 }
 
 document.addEventListener('keydown', (e) => {
@@ -54,18 +57,37 @@ document.addEventListener('keydown', (e) => {
             selectedNumber = 9;
         }
     } else if (e.code === 'Space') {
-        if (selectedNumber === fallingNumber.value) {
-            spawnNewNumber();
-        } else {
+        // Fire at the lowest matching number
+        let found = false;
+        for (let i = 0; i < fallingNumbers.length; i++) {
+            if (fallingNumbers[i].value === selectedNumber) {
+                removeNumber(i);
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
             // Optionally, penalize for wrong fire
         }
     }
 });
 
+let spawnTimer = 0;
+let spawnInterval = 120; // frames (about 2 seconds at 60fps)
+
 function gameLoop() {
     ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-    fallingNumber.update();
-    fallingNumber.draw(ctx);
+
+    // Update and draw all falling numbers
+    for (let i = fallingNumbers.length - 1; i >= 0; i--) {
+        const num = fallingNumbers[i];
+        num.update();
+        num.draw(ctx);
+        if (num.y > GAME_HEIGHT + 40) {
+            misses++;
+            removeNumber(i);
+        }
+    }
 
     // Draw selected number label
     ctx.font = 'bold 32px Montserrat, Arial Black, Arial, sans-serif';
@@ -76,10 +98,11 @@ function gameLoop() {
     ctx.fillStyle = '#0ff';
     ctx.fillText(`Misses: ${misses}`, 10, 30);
 
-    // Check if number reached the bottom
-    if (fallingNumber.y > GAME_HEIGHT + 40) {
-        misses++;
+    // Spawn new number at interval
+    spawnTimer++;
+    if (spawnTimer >= spawnInterval) {
         spawnNewNumber();
+        spawnTimer = 0;
     }
 
     requestAnimationFrame(gameLoop);
