@@ -32,8 +32,8 @@ class FallingNumber {
 }
 
 // --- Sound Effects ---
-function playBeep(frequency = 440, duration = 100, type = 'square', volume = 0.1) {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+function playBeep(frequency = 440, duration = 100, type = 'square', volume = 0.1, ctxOverride = null) {
+    const ctx = ctxOverride || new (window.AudioContext || window.webkitAudioContext)();
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = type;
@@ -43,7 +43,16 @@ function playBeep(frequency = 440, duration = 100, type = 'square', volume = 0.1
     gain.connect(ctx.destination);
     osc.start();
     osc.stop(ctx.currentTime + duration / 1000);
-    osc.onended = () => ctx.close();
+    osc.onended = () => { if (!ctxOverride) ctx.close(); };
+}
+
+function playMissSound() {
+    // Arcade-style miss: three descending notes
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    playBeep(440, 80, 'sawtooth', 0.15, ctx);
+    setTimeout(() => playBeep(330, 80, 'sawtooth', 0.13, ctx), 90);
+    setTimeout(() => playBeep(220, 120, 'triangle', 0.11, ctx), 180);
+    setTimeout(() => ctx.close(), 400);
 }
 
 let fallingNumbers = [];
@@ -59,6 +68,49 @@ let levelMessage = '';
 let levelMessageTimer = 0;
 const MAX_LEVEL = 10;
 let gameOver = false;
+
+let countdownActive = true;
+let countdownValue = 3;
+let countdownTimer = 60; // 1 second per count at 60fps
+
+let showMissLabel = false;
+let missLabelTimer = 0;
+const MISS_LABEL_FRAMES = 45; // ~0.75s at 60fps
+
+let waitingForContinue = false;
+let pendingGameOver = false;
+
+function startCountdown(callback) {
+    countdownActive = true;
+    countdownValue = 3;
+    countdownTimer = 60;
+    function countdownLoop() {
+        ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+        ctx.font = 'bold 64px Montserrat, Arial Black, Arial, sans-serif';
+        ctx.fillStyle = '#ff0';
+        ctx.textAlign = 'center';
+        ctx.fillText(countdownValue > 0 ? countdownValue : 'GO!', GAME_WIDTH / 2, GAME_HEIGHT / 2);
+        if (countdownValue > 0) {
+            countdownTimer--;
+            if (countdownTimer <= 0) {
+                countdownValue--;
+                countdownTimer = 60;
+            }
+            requestAnimationFrame(countdownLoop);
+        } else {
+            setTimeout(() => {
+                countdownActive = false;
+                callback();
+            }, 700); // Show 'GO!' for a short moment
+        }
+    }
+    countdownLoop();
+}
+
+function startGameLoop() {
+    countdownActive = false;
+    requestAnimationFrame(gameLoop);
+}
 
 function getFallSpeed() {
     // Start very slow and increase gently per level
@@ -100,12 +152,16 @@ function resetGame() {
     levelMessage = '';
     levelMessageTimer = 0;
     gameOver = false;
+    waitingForContinue = false;
+    pendingGameOver = false;
     spawnTimer = 0;
     spawnInterval = getSpawnInterval();
     updateStats();
     showLevelUpMessage();
     fallingNumbers.push(new FallingNumber());
     fallingNumbers[0].speed = getFallSpeed();
+    countdownActive = true;
+    startCountdown(startGameLoop);
 }
 
 function showPlayAgainButton() {
@@ -144,6 +200,22 @@ function hidePlayAgainButton() {
 }
 
 document.addEventListener('keydown', (e) => {
+    if (waitingForContinue) {
+        waitingForContinue = false;
+        if (pendingGameOver) {
+            pendingGameOver = false;
+            gameOver = true;
+            updateStats();
+            requestAnimationFrame(gameLoop);
+        } else {
+            countdownActive = true;
+            startCountdown(() => {
+                countdownActive = false;
+                requestAnimationFrame(gameLoop);
+            });
+        }
+        return;
+    }
     if (e.key === 'j' || e.key === 'J') {
         if (selectedNumber < 9) {
             selectedNumber++;
@@ -192,6 +264,21 @@ function getSpawnInterval() {
 let spawnInterval = getSpawnInterval();
 
 function gameLoop() {
+    if (countdownActive) {
+        return;
+    }
+    if (waitingForContinue) {
+        ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+        ctx.font = 'bold 48px Montserrat, Arial Black, Arial, sans-serif';
+        ctx.fillStyle = '#f00';
+        ctx.textAlign = 'center';
+        ctx.fillText('Miss!', GAME_WIDTH / 2, GAME_HEIGHT / 2 - 60);
+        ctx.font = 'bold 28px Montserrat, Arial Black, Arial, sans-serif';
+        ctx.fillStyle = '#fff';
+        ctx.fillText('Hit any key to continue', GAME_WIDTH / 2, GAME_HEIGHT / 2 + 10);
+        requestAnimationFrame(gameLoop); // Keep loop running
+        return;
+    }
     if (gameOver) {
         // Draw Game Over message
         ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
@@ -218,13 +305,18 @@ function gameLoop() {
             misses++;
             lives--;
             updateStats();
-            playBeep(220, 180, 'sawtooth', 0.12); // Missed beep
+            playMissSound();
             removeNumber(i);
+            
+            // Show Miss label and wait for key press
+            waitingForContinue = true;
+            
             if (lives <= 0) {
-                gameOver = true;
-                updateStats();
-                break;
+                pendingGameOver = true;
             }
+            
+            requestAnimationFrame(gameLoop);
+            return;
         }
     }
 
@@ -267,9 +359,8 @@ function gameLoop() {
 }
 
 // At the start of the game, spawn the first number with correct speed:
-fallingNumbers.push(new FallingNumber());
-fallingNumbers[0].speed = getFallSpeed();
-
 updateStats();
 showLevelUpMessage();
-gameLoop();
+
+// Start the initial countdown and game loop
+startCountdown(startGameLoop);
