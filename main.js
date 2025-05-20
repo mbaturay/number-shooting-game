@@ -43,6 +43,7 @@ let showLevelMessage = false;
 let levelMessage = '';
 let levelMessageTimer = 0;
 const MAX_LEVEL = 10;
+let gameOver = false;
 
 function getFallSpeed() {
     // Start very slow and increase gently per level
@@ -70,6 +71,61 @@ function showLevelUpMessage() {
     showLevelMessage = true;
     levelMessage = `LEVEL ${level} START!`;
     levelMessageTimer = 120; // ~2 seconds at 60fps
+}
+
+function resetGame() {
+    fallingNumbers = [];
+    selectedNumber = 1;
+    misses = 0;
+    score = 0;
+    lives = 3;
+    level = 1;
+    hitsThisLevel = 0;
+    showLevelMessage = false;
+    levelMessage = '';
+    levelMessageTimer = 0;
+    gameOver = false;
+    spawnTimer = 0;
+    spawnInterval = getSpawnInterval();
+    updateStats();
+    showLevelUpMessage();
+    fallingNumbers.push(new FallingNumber());
+    fallingNumbers[0].speed = getFallSpeed();
+}
+
+function showPlayAgainButton() {
+    let btn = document.getElementById('play-again-btn');
+    if (!btn) {
+        btn = document.createElement('button');
+        btn.id = 'play-again-btn';
+        btn.textContent = 'Play Again';
+        btn.style.position = 'fixed'; // Use fixed to always be at the bottom
+        btn.style.left = '50%';
+        btn.style.bottom = '40px'; // 40px from the bottom
+        btn.style.top = '';
+        btn.style.transform = 'translateX(-50%)';
+        btn.style.fontSize = '1.2em';
+        btn.style.padding = '0.4em 1.5em';
+        btn.style.background = '#222';
+        btn.style.color = '#ff0';
+        btn.style.border = '3px solid #ff0';
+        btn.style.borderRadius = '10px';
+        btn.style.cursor = 'pointer';
+        btn.style.zIndex = 20;
+        document.body.appendChild(btn);
+    }
+    btn.textContent = 'Play Again';
+    btn.style.display = 'block';
+    btn.onclick = () => {
+        btn.style.display = 'none';
+        resetGame();
+        requestAnimationFrame(gameLoop);
+    };
+}
+
+function hidePlayAgainButton() {
+    const btn = document.getElementById('play-again-btn');
+    if (btn) btn.style.display = 'none';
 }
 
 document.addEventListener('keydown', (e) => {
@@ -120,6 +176,21 @@ function getSpawnInterval() {
 let spawnInterval = getSpawnInterval();
 
 function gameLoop() {
+    if (gameOver) {
+        // Draw Game Over message
+        ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+        ctx.font = 'bold 36px Montserrat, Arial Black, Arial, sans-serif'; // Smaller Game Over
+        ctx.fillStyle = '#f00';
+        ctx.textAlign = 'center';
+        ctx.fillText('GAME OVER', GAME_WIDTH / 2, GAME_HEIGHT / 2);
+        ctx.font = 'bold 20px Montserrat, Arial Black, Arial, sans-serif'; // Smaller score
+        ctx.fillStyle = '#fff';
+        ctx.fillText(`Score: ${score}`, GAME_WIDTH / 2, GAME_HEIGHT / 2 + 40);
+        showPlayAgainButton();
+        return;
+    }
+    hidePlayAgainButton();
+
     ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
     // Update and draw all falling numbers
@@ -132,6 +203,11 @@ function gameLoop() {
             lives--;
             updateStats();
             removeNumber(i);
+            if (lives <= 0) {
+                gameOver = true;
+                updateStats();
+                break;
+            }
         }
     }
 
