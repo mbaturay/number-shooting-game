@@ -9,6 +9,23 @@ const GAME_HEIGHT = 600;
 canvas.width = GAME_WIDTH;
 canvas.height = GAME_HEIGHT;
 
+// Adjust canvas size based on screen size
+function adjustCanvasSize() {
+    if (window.innerWidth < 450) {
+        canvas.width = 320;
+        canvas.height = 480;
+    } else {
+        canvas.width = GAME_WIDTH;
+        canvas.height = GAME_HEIGHT;
+    }
+}
+
+// Call once at start
+adjustCanvasSize();
+
+// And on window resize
+window.addEventListener('resize', adjustCanvasSize);
+
 function getRandomNumber() {
     return Math.floor(Math.random() * 9) + 1;
 }
@@ -121,6 +138,8 @@ function getFallSpeed() {
 function updateStats() {
     document.getElementById('score').textContent = `Score: ${score}`;
     document.getElementById('lives').textContent = `Lives: ${lives}`;
+    document.getElementById('level').textContent = `Level: ${level}`;
+    document.getElementById('selected-number').textContent = selectedNumber;
 }
 
 function spawnNewNumber() {
@@ -219,19 +238,20 @@ document.addEventListener('keydown', (e) => {
             });
         }
         return;
-    }
-    if (e.key === 'j' || e.key === 'J') {
+    }    if (e.key === 'j' || e.key === 'J') {
         if (selectedNumber < 9) {
             selectedNumber++;
         } else {
             selectedNumber = 1;
         }
+        document.getElementById('selected-number').textContent = selectedNumber;
     } else if (e.key === 'd' || e.key === 'D') {
         if (selectedNumber > 1) {
             selectedNumber--;
         } else {
             selectedNumber = 9;
         }
+        document.getElementById('selected-number').textContent = selectedNumber;
     } else if (e.code === 'Space') {
         // Fire at the lowest matching number
         let found = false;
@@ -324,22 +344,7 @@ function gameLoop() {
             requestAnimationFrame(gameLoop);
             return;
         }
-    }
-
-    // Draw selected number label
-    ctx.font = 'bold 32px Montserrat, Arial Black, Arial, sans-serif';
-    ctx.fillStyle = '#ff0';
-    ctx.textAlign = 'left';
-    ctx.fillText(`Selected: ${selectedNumber}`, 10, GAME_HEIGHT - 40);
-    ctx.font = 'bold 20px Montserrat, Arial Black, Arial, sans-serif';
-    ctx.fillStyle = '#0ff';
-    ctx.fillText(`Misses: ${misses}`, 10, 30);
-    ctx.fillStyle = '#0f0';
-    ctx.fillText(`Level: ${level}`, 10, 60);
-    ctx.fillStyle = '#0ff';
-    ctx.fillText(`Hits: ${hitsThisLevel}/5`, 10, 90);
-
-    // Show level message
+    }    // Show level message
     if (showLevelMessage && levelMessageTimer > 0) {
         const msgDiv = document.getElementById('level-message');
         if (msgDiv) {

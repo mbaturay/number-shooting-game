@@ -6,14 +6,30 @@
     <title>Number Shooter</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
-    <h1>Number Shooter</h1>
-    <div id="stats" style="display: flex; justify-content: center; gap: 40px; margin-bottom: 10px; font-family: 'Montserrat', Arial Black, Arial, sans-serif; font-size: 1.2em; color: #fff;">
-        <span id="score">Score: 0</span>
-        <span id="lives">Lives: 3</span>
+<body>    <h1>Number Shooter</h1>    <div id="game-container">
+        <div id="left-stats">
+            <div class="stat-box"><span id="score">Score: 0</span></div>
+            <div class="stat-box"><span id="lives">Lives: 3</span></div>
+            <div class="stat-box"><span id="level">Level: 1</span></div>
+        </div>
+        
+        <div id="game-area">
+            <div id="level-message" class="level-message"></div>
+            <canvas id="game" width="400" height="600"></canvas>
+        </div>
+        
+        <div id="right-stats">
+            <div class="stat-box" id="selected-number-container">
+                <div class="number-label">Your Number</div>
+                <div id="selected-number">1</div>
+            </div>
+            <div class="controls-box">
+                <div class="control-key">D</div>: Decrease
+                <div class="control-key">J</div>: Increase
+                <div class="control-key">Space</div>: Fire
+            </div>
+        </div>
     </div>
-    <div id="level-message" class="level-message"></div>
-    <canvas id="game" width="800" height="600"></canvas>
     <script src="main.js"></script>
 </body>
 </html>
