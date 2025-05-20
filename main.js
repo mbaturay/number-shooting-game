@@ -31,6 +31,21 @@ class FallingNumber {
     }
 }
 
+// --- Sound Effects ---
+function playBeep(frequency = 440, duration = 100, type = 'square', volume = 0.1) {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type;
+    osc.frequency.value = frequency;
+    gain.gain.value = volume;
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + duration / 1000);
+    osc.onended = () => ctx.close();
+}
+
 let fallingNumbers = [];
 
 let selectedNumber = 1;
@@ -150,6 +165,7 @@ document.addEventListener('keydown', (e) => {
                 score++;
                 hitsThisLevel++;
                 updateStats();
+                playBeep(880, 80, 'square', 0.15); // Success beep
                 // Level up logic
                 if (hitsThisLevel >= 5 && level < MAX_LEVEL) {
                     level++;
@@ -202,6 +218,7 @@ function gameLoop() {
             misses++;
             lives--;
             updateStats();
+            playBeep(220, 180, 'sawtooth', 0.12); // Missed beep
             removeNumber(i);
             if (lives <= 0) {
                 gameOver = true;
