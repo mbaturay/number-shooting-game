@@ -14,7 +14,7 @@ function drawGrid() {
     const gridSize = 40; // Size of each grid cell
     const lineWidth = 0.5; // Width of grid lines
     ctx.save();
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)'; // Very light white
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)'; // Very light white
     ctx.lineWidth = lineWidth;
     
     // Draw vertical lines
@@ -37,9 +37,12 @@ function drawGrid() {
 
 // Adjust canvas size based on screen size
 function adjustCanvasSize() {
-    if (window.innerWidth < 450) {
-        canvas.width = 320;
-        canvas.height = 480;
+    if (window.innerWidth < 768) {
+        // For smaller screens, maintain aspect ratio but fit within viewport
+        const maxWidth = Math.min(350, window.innerWidth * 0.9);
+        const aspectRatio = GAME_HEIGHT / GAME_WIDTH;
+        canvas.width = maxWidth;
+        canvas.height = maxWidth * aspectRatio;
     } else {
         canvas.width = GAME_WIDTH;
         canvas.height = GAME_HEIGHT;

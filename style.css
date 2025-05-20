@@ -1,5 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@900&display=swap');
 
+html, body {
+    height: 100%;
+    overflow: hidden; /* Prevent scrolling */
+}
+
 body {
     background: #111;
     color: #fff;
@@ -10,24 +15,27 @@ body {
     justify-content: center;
     min-height: 100vh;
     margin: 0;
-    padding: 20px;
+    padding: 0; /* Remove padding */
+    box-sizing: border-box;
 }
 
 h1 {
-    margin-bottom: 24px;
+    margin: 10px 0 15px 0; /* Reduced margin */
     letter-spacing: 2px;
     text-shadow: 0 2px 8px #000;
     font-family: 'Montserrat', 'Arial Black', 'Arial', sans-serif;
     font-weight: 900;
+    font-size: 1.8rem; /* Slightly smaller title */
 }
 
 #game-container {
     display: flex;
     justify-content: center;
     align-items: flex-start;
-    gap: 20px;
+    gap: 15px; /* Reduced gap */
     max-width: 900px;
     margin: 0 auto;
+    height: calc(100vh - 80px); /* Set a fixed height based on viewport */
 }
 
 #left-stats, #right-stats {
@@ -96,8 +104,10 @@ h1 {
     color: #fff;
     border: 4px solid #fff;
     box-shadow: 0 0 24px #0ff, 0 0 8px #fff inset;
-    width: 400px;
-    height: 600px;
+    max-width: 400px;
+    max-height: 600px;
+    width: 100%;
+    height: auto;
     margin: 0 auto;
     font-family: 'Montserrat', 'Arial Black', 'Arial', sans-serif;
 }
@@ -152,17 +162,40 @@ h1 {
     }
 }
 
-@media (max-width: 450px) {
-    #game {
-        width: 320px;
-        height: 480px;
+@media (max-width: 768px) {
+    #game-container {
+        flex-direction: column;
+        align-items: center;
+        height: auto;
+        gap: 10px;
     }
     
     #left-stats, #right-stats {
-        width: 320px;
+        flex-direction: row;
+        width: 100%;
+        justify-content: center;
+        gap: 10px;
+    }
+    
+    .stat-box {
+        padding: 8px;
+        font-size: 1em;
+    }
+    
+    #game-area {
+        order: -1; /* Game area first on mobile */
+    }
+    
+    #game {
+        width: 90vw; /* 90% of viewport width */
+        height: auto;
+        aspect-ratio: 2/3; /* Maintain aspect ratio */
+        max-width: 350px;
+        max-height: 525px;
     }
     
     h1 {
         font-size: 1.5em;
+        margin: 5px 0;
     }
 }
