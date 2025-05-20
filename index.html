@@ -11,11 +11,23 @@
             <div class="stat-box"><span id="score">Score: 0</span></div>
             <div class="stat-box"><span id="lives">Lives: 3</span></div>
             <div class="stat-box"><span id="level">Level: 1</span></div>
+            <div class="stat-box"><span id="high-score">Best: 0</span></div>
         </div>
-        
-        <div id="game-area">
+          <div id="game-area">
             <div id="level-message" class="level-message"></div>
             <canvas id="game" width="400" height="600"></canvas>
+            <div id="bottom-controls">
+                <div class="controls-box">
+                    <span class="control-key">D</span> Decrease
+                    <span class="control-key">J</span> Increase
+                    <span class="control-key">Space</span> Fire
+                </div>
+                <div class="touch-controls">
+                    <button id="decrease-btn">−</button>
+                    <button id="fire-btn">Fire</button>
+                    <button id="increase-btn">+</button>
+                </div>
+            </div>
         </div>
         
         <div id="right-stats">
@@ -23,13 +35,13 @@
                 <div class="number-label">Your Number</div>
                 <div id="selected-number">1</div>
             </div>
-            <div class="controls-box">
-                <div class="control-key">D</div>: Decrease
-                <div class="control-key">J</div>: Increase
-                <div class="control-key">Space</div>: Fire
+            <div class="stat-box" id="settings-container">
+                <div class="settings-control">
+                    <label for="sound-toggle">Sound</label>
+                    <input type="checkbox" id="sound-toggle" checked>
+                </div>
             </div>
-        </div>
-    </div>
+        </div>    </div>
     <script src="main.js"></script>
 </body>
 </html>
