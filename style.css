@@ -1,0 +1,33 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@900&display=swap');
+
+body {
+    background: #111;
+    color: #fff;
+    font-family: 'Montserrat', 'Arial Black', 'Arial', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    margin: 0;
+}
+
+h1 {
+    margin-bottom: 24px;
+    letter-spacing: 2px;
+    text-shadow: 0 2px 8px #000;
+    font-family: 'Montserrat', 'Arial Black', 'Arial', sans-serif;
+    font-weight: 900;
+}
+
+#game {
+    display: block;
+    background: #000;
+    color: #fff;
+    border: 4px solid #fff;
+    box-shadow: 0 0 24px #0ff, 0 0 8px #fff inset;
+    width: 400px;
+    height: 600px;
+    margin: 0 auto;
+    font-family: 'Montserrat', 'Arial Black', 'Arial', sans-serif;
+}

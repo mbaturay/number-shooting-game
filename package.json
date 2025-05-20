@@ -1,0 +1,12 @@
+{
+  "name": "number-shooting-game",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Murat Baturay",
+  "license": "ISC",
+  "description": "Simple and fun shooting game that intercepts approaching numbe’ invaders by pressing the decimal key as many times to match the numbers in the target"
+}
