@@ -9,6 +9,32 @@ const GAME_HEIGHT = 600;
 canvas.width = GAME_WIDTH;
 canvas.height = GAME_HEIGHT;
 
+// Draw a light grid pattern for the game background
+function drawGrid() {
+    const gridSize = 40; // Size of each grid cell
+    const lineWidth = 0.5; // Width of grid lines
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)'; // Very light white
+    ctx.lineWidth = lineWidth;
+    
+    // Draw vertical lines
+    for (let x = gridSize; x < GAME_WIDTH; x += gridSize) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, GAME_HEIGHT);
+        ctx.stroke();
+    }
+    
+    // Draw horizontal lines
+    for (let y = gridSize; y < GAME_HEIGHT; y += gridSize) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(GAME_WIDTH, y);
+        ctx.stroke();
+    }
+    ctx.restore();
+}
+
 // Adjust canvas size based on screen size
 function adjustCanvasSize() {
     if (window.innerWidth < 450) {
@@ -103,6 +129,8 @@ function startCountdown(callback) {
     countdownTimer = 60;
     function countdownLoop() {
         ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+        // Draw grid on countdown screen too
+        drawGrid();
         ctx.font = 'bold 64px Montserrat, Arial Black, Arial, sans-serif';
         ctx.fillStyle = '#ff0';
         ctx.textAlign = 'center';
@@ -290,9 +318,9 @@ let spawnInterval = getSpawnInterval();
 function gameLoop() {
     if (countdownActive) {
         return;
-    }
-    if (waitingForContinue) {
+    }    if (waitingForContinue) {
         ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+        drawGrid(); // Add grid to the miss screen
         ctx.font = 'bold 48px Montserrat, Arial Black, Arial, sans-serif';
         ctx.fillStyle = '#f00';
         ctx.textAlign = 'center';
@@ -302,10 +330,10 @@ function gameLoop() {
         ctx.fillText('Hit any key to continue', GAME_WIDTH / 2, GAME_HEIGHT / 2 + 10);
         requestAnimationFrame(gameLoop); // Keep loop running
         return;
-    }
-    if (gameOver) {
+    }    if (gameOver) {
         // Draw Game Over message
         ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+        drawGrid(); // Add grid to game over screen
         ctx.font = 'bold 36px Montserrat, Arial Black, Arial, sans-serif'; // Smaller Game Over
         ctx.fillStyle = '#f00';
         ctx.textAlign = 'center';
@@ -319,6 +347,9 @@ function gameLoop() {
     hidePlayAgainButton();
 
     ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+    // Draw the grid
+    drawGrid();
 
     // Update and draw all falling numbers
     for (let i = fallingNumbers.length - 1; i >= 0; i--) {
