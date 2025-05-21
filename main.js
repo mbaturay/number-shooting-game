@@ -206,8 +206,162 @@ class FallingNumber {
     }
 }
 
+// --- HORIZONTAL STYLE MODE (ONE-LINER, SHIFTING, ANIMATED) ---
+let horizontalMode = true;
+let horizontalRow = [];
+let horizontalRowLength = 7;
+let horizontalShiftTimer = 0;
+let horizontalShiftInterval = 120;
+
+// Animation state for each cell
+function makeCell(num, x) {
+    return {
+        value: num, // null or number
+        x: x, // current x offset (0 = normal position)
+        targetX: x,
+        animating: false,
+        animationStart: 0,
+        animationDuration: 180 // ms
+    };
+}
+
+function getHorizontalShiftInterval() {
+    return Math.max(120 - (level - 1) * 8, 30);
+}
+
+function resetHorizontalRow() {
+    horizontalRow = Array(horizontalRowLength).fill(null).map(() => makeCell(null, 0));
+    horizontalShiftTimer = 0;
+    horizontalShiftInterval = getHorizontalShiftInterval();
+}
+
+function shiftHorizontalRow() {
+    if (horizontalRow[0].value !== null) {
+        gameOver = true;
+        showPlayAgainButton();
+        return;
+    }
+    // Animate all cells left
+    for (let i = 0; i < horizontalRowLength; i++) {
+        horizontalRow[i].targetX = -1;
+        horizontalRow[i].animating = true;
+        horizontalRow[i].animationStart = performance.now();
+    }
+    // After animation, shift values
+    setTimeout(() => {
+        for (let i = 0; i < horizontalRowLength - 1; i++) {
+            horizontalRow[i].value = horizontalRow[i + 1].value;
+        }
+        horizontalRow[horizontalRowLength - 1].value = getRandomNumber();
+        // Reset animation state
+        for (let i = 0; i < horizontalRowLength; i++) {
+            horizontalRow[i].x = 0;
+            horizontalRow[i].targetX = 0;
+            horizontalRow[i].animating = false;
+        }
+    }, 180);
+}
+
+function animateHorizontalRow() {
+    const now = performance.now();
+    for (let i = 0; i < horizontalRowLength; i++) {
+        const cell = horizontalRow[i];
+        if (cell.animating) {
+            const elapsed = now - cell.animationStart;
+            let t = Math.min(elapsed / cell.animationDuration, 1);
+            // Ease-out cubic
+            t = 1 - Math.pow(1 - t, 3);
+            if (cell.targetX === -1) {
+                cell.x = -t; // slide left by 1 cell
+            } else if (cell.targetX > 0) {
+                cell.x = t * cell.targetX;
+            } else {
+                cell.x = 0;
+            }
+            if (elapsed >= cell.animationDuration) {
+                cell.x = cell.targetX;
+                cell.animating = false;
+            }
+        }
+    }
+}
+
+function drawHorizontalRow() {
+    ctx.save();
+    const fontSize = Math.max(32, Math.min(64, canvas.height / 7));
+    ctx.font = `bold ${fontSize}px 'Consolas', 'Courier New', monospace`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const spacing = fontSize * 0.78;
+    const totalWidth = spacing * horizontalRowLength;
+    const startX = (canvas.width - totalWidth) / 2 + spacing / 2;
+    const y = canvas.height / 2;
+    for (let i = 0; i < horizontalRowLength; i++) {
+        const cell = horizontalRow[i];
+        if (cell.value !== null) {
+            let drawX = startX + (i + (cell.x || 0)) * spacing;
+            ctx.fillStyle = '#fff';
+            ctx.shadowColor = '#fff';
+            ctx.shadowBlur = 1;
+            ctx.fillText(cell.value, drawX, y);
+        }
+    }
+    ctx.restore();
+}
+
+function updateHorizontalRow() {
+    if (gameOver) return;
+    horizontalShiftTimer++;
+    animateHorizontalRow();
+    if (horizontalShiftTimer >= horizontalShiftInterval) {
+        shiftHorizontalRow();
+        horizontalShiftTimer = 0;
+        horizontalShiftInterval = getHorizontalShiftInterval();
+    }
+}
+
+function fireAtHorizontalRow() {
+    // Find first matching number from the left
+    for (let i = 0; i < horizontalRowLength; i++) {
+        const cell = horizontalRow[i];
+        if (cell.value === selectedNumber) {
+            // Remove the number (make it disappear)
+            cell.value = null;
+            // Animate all cells to the left of i to slide right by 1
+            for (let j = 0; j < i; j++) {
+                horizontalRow[j].targetX = 1;
+                horizontalRow[j].animating = true;
+                horizontalRow[j].animationStart = performance.now();
+            }
+            // After animation, shift left side right and fill leftmost with null
+            setTimeout(() => {
+                for (let j = i - 1; j >= 0; j--) {
+                    horizontalRow[j + 1].value = horizontalRow[j].value;
+                }
+                if (i > 0) horizontalRow[0].value = null;
+                // Reset animation state for left side
+                for (let j = 0; j < i; j++) {
+                    horizontalRow[j].x = 0;
+                    horizontalRow[j].targetX = 0;
+                    horizontalRow[j].animating = false;
+                }
+                // Only restart the shift timer after animation completes
+                horizontalShiftTimer = 0;
+            }, 180);
+            score++;
+            updateStats();
+            playBeep(880, 80, 'square', 0.15);
+            return true;
+        }
+    }
+    // Miss
+    if (navigator.vibrate && soundEnabled) {
+        navigator.vibrate(30);
+    }
+    return false;
+}
+
 // --- Sound Effects ---
-// Sound toggle
 let soundEnabled = true;
 
 // Initialize sound preference from localStorage
@@ -566,7 +720,9 @@ document.getElementById('decrease-btn').addEventListener('click', function(e) {
 
 document.getElementById('fire-btn').addEventListener('click', function(e) {
     e.preventDefault();
-    if (!handleContinue()) {
+    if (horizontalMode) {
+        fireAtHorizontalRow();
+    } else if (!handleContinue()) {
         fireAtNumber();
     }
 });
@@ -578,8 +734,10 @@ canvas.addEventListener('click', function() {
 
 // Set up keyboard controls
 document.addEventListener('keydown', (e) => {
-    if (waitingForContinue) {
-        handleContinue();
+    if (horizontalMode) {
+        if (e.code === 'Space') fireAtHorizontalRow();
+        if (e.key === 'j' || e.key === 'J') increaseNumber();
+        if (e.key === 'd' || e.key === 'D') decreaseNumber();
         return;
     }
     
@@ -599,7 +757,31 @@ function getSpawnInterval() {
 }
 let spawnInterval = getSpawnInterval();
 
+// --- MODIFIED GAME LOOP FOR HORIZONTAL MODE (ONE-LINER) ---
 function gameLoop() {
+    if (horizontalMode) {
+        if (gameOver) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawGrid();
+            ctx.font = 'bold 48px Montserrat, Arial Black, Arial, sans-serif';
+            ctx.fillStyle = '#f00';
+            ctx.textAlign = 'center';
+            ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2);
+            showPlayAgainButton();
+            return;
+        }
+        hidePlayAgainButton();
+        ctx.globalAlpha = 0.25;
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.globalAlpha = 1.0;
+        drawGrid();
+        updateHorizontalRow();
+        drawHorizontalRow();
+        requestAnimationFrame(gameLoop);
+        return;
+    }
+
     if (countdownActive) {
         return;
     }
@@ -718,13 +900,19 @@ function gameLoop() {
     requestAnimationFrame(gameLoop);
 }
 
-// Initialize game preferences and data
-loadHighScore();
-initSoundPreference();
-
-// At the start of the game, spawn the first number with correct speed:
-updateStats();
-showLevelUpMessage();
-
-// Start the initial countdown and game loop
-startCountdown(startGameLoop);
+// --- HORIZONTAL MODE INIT (ONE-LINER) ---
+if (horizontalMode) {
+    loadHighScore();
+    initSoundPreference();
+    updateStats();
+    resetHorizontalRow();
+    requestAnimationFrame(gameLoop);
+} else {
+    // Initialize game preferences and data for vertical mode
+    loadHighScore();
+    initSoundPreference();
+    updateStats();
+    showLevelUpMessage();
+    // Start the initial countdown and game loop for vertical mode
+    startCountdown(startGameLoop);
+}
