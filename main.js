@@ -136,6 +136,13 @@ class FallingNumber {
         
         // Store the relative position (0-1 range) for better resizing
         this.relativeX = this.x / canvas.width;
+
+        this.pushBackAnimating = false;
+        this.pushBackStartY = 0;
+        this.pushBackTargetY = 0;
+        this.pushBackProgress = 0; // 0 to 1
+        this.pushBackDuration = 0; // ms
+        this.pushBackStartTime = 0;
     }
     update() {
         // Always recalculate speed based on current canvas height
@@ -144,6 +151,21 @@ class FallingNumber {
         
         // Update x position when window is resized
         this.x = this.relativeX * canvas.width;
+
+        // Animate push-back if active
+        if (this.pushBackAnimating) {
+            const now = performance.now();
+            const elapsed = now - this.pushBackStartTime;
+            const duration = this.pushBackDuration;
+            let t = Math.min(elapsed / duration, 1);
+            // Ease-out cubic
+            t = 1 - Math.pow(1 - t, 3);
+            this.y = this.pushBackStartY + (this.pushBackTargetY - this.pushBackStartY) * t;
+            if (elapsed >= duration) {
+                this.y = this.pushBackTargetY;
+                this.pushBackAnimating = false;
+            }
+        }
     }
     draw(ctx) {
         // Dynamic font size based on canvas dimensions
@@ -447,25 +469,55 @@ function fireAtNumber() {
     let found = false;
     for (let i = 0; i < fallingNumbers.length; i++) {
         if (fallingNumbers[i].value === selectedNumber) {
+            // --- SMART SCORING SYSTEM ---
+            const num = fallingNumbers[i];
+            const maxMultiplier = 4;
+            // Clamp y between 0 and canvas.height
+            const yClamped = Math.max(0, Math.min(num.y, canvas.height));
+            // Multiplier: 1 at top, maxMultiplier at bottom
+            let multiplier = 1 + (yClamped / canvas.height) * (maxMultiplier - 1);
+            multiplier = Math.max(1, Math.min(multiplier, maxMultiplier));
+            const points = Math.round(multiplier);
+            score += points;
+            // Optionally, show feedback (floating label, etc.)
+            // --- END SMART SCORING SYSTEM ---
             removeNumber(i);
-            score++;
             hitsThisLevel++;
             updateStats();
             playBeep(880, 80, 'square', 0.15); // Success beep
-            // Level up logic
+            // --- PUSH BACK LOGIC WITH OVERLAP PREVENTION ---
+            const pushBack = canvas.height * (0.07 + 0.01 * (level - 1));
+            const duration = 320; // ms, adjust for smoothness
+            const now = performance.now();
+            const sorted = [...fallingNumbers].sort((a, b) => a.y - b.y);
+            const minSpacing = Math.max(24, Math.min(48, canvas.width / 10)) * 1.1;
+            let lastTargetY = -Infinity;
+            for (let idx = 0; idx < sorted.length; idx++) {
+                const num = sorted[idx];
+                num.pushBackAnimating = true;
+                num.pushBackStartY = num.y;
+                let targetY = Math.max(num.y - pushBack, 0);
+                if (targetY < lastTargetY + minSpacing) {
+                    targetY = lastTargetY + minSpacing;
+                }
+                num.pushBackTargetY = targetY;
+                num.pushBackProgress = 0;
+                num.pushBackDuration = duration;
+                num.pushBackStartTime = now;
+                lastTargetY = targetY;
+            }
+            // --- END PUSH BACK LOGIC ---
             if (hitsThisLevel >= 5 && level < MAX_LEVEL) {
                 level++;
                 hitsThisLevel = 0;
-                // Do NOT update speed for existing numbers
                 showLevelUpMessage();
-                spawnInterval = getSpawnInterval(); // update spawn interval on level up
+                spawnInterval = getSpawnInterval();
             }
             found = true;
             break;
         }
     }
     if (!found) {
-        // Optional: add feedback for misses (short vibration on mobile)
         if (navigator.vibrate && soundEnabled) {
             navigator.vibrate(30);
         }

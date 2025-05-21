@@ -1,25 +1,25 @@
 # Number Shooter
 
-A retro-inspired web game where you intercept falling numbers by matching and shooting them before they reach the bottom!
+A fast-paced browser game where you shoot falling numbers by selecting the correct value. Now featuring a smart scoring system and improved gameplay mechanics!
 
 ## How to Play
 
-- Use **J** to increase and **D** to decrease your selected number (1-9).
-- Press **Space** to shoot. If your selected number matches a falling number, it is destroyed and you score a point.
-- On touch devices, use the **+** and **-** buttons to change your number and the **Fire** button to shoot.
-- Each missed number costs you a life. You start with 3 lives.
-- Every 5 successful hits increases the level (up to 10), making numbers fall faster and spawn more frequently.
-- The game ends when you lose all your lives. Click **Play Again** to restart!
-- Your high score is saved automatically.
+1. Select the number matching a falling number.
+2. Fire to shoot it before it reaches the bottom.
+3. The lower you shoot, the higher your score multiplier!
+4. Don't let any number reach the bottom, or you'll lose a life.
+5. Survive as long as you can and aim for a high score!
 
 ## Features
-
-- 10 levels with increasing speed and spawn rate
-- Score and lives tracking with high score persistence
-- Retro visuals and level-up messages
-- Responsive controls for both keyboard and touch devices
-- Sound toggle with preference saving
-- Fully responsive design that works on all screen sizes
+- **Falling Numbers:** Numbers fall from the top of the screen. Select the correct number and shoot before they reach the bottom.
+- **Push-Back Mechanic:** Successfully hitting a number pushes all remaining numbers upward, giving you more headroom. The push-back is smoothly animated and scales with level and canvas size.
+- **Clash Avoidance:** Push-back logic ensures numbers never overlap, keeping gameplay fair and readable.
+- **Smart Scoring System:**
+  - The closer you hit a number to the bottom, the higher your score multiplier (up to 4x).
+  - Hitting numbers near the top gives the minimum score (1x), while risky, last-moment shots are rewarded with more points.
+- **Levels:** Progress through levels as you score more points. Higher levels increase the challenge.
+- **Sound Effects:** Toggle sound on/off for feedback.
+- **Responsive Design:** Game scales to fit your device or browser window.
 
 ## Run Locally
 
@@ -49,6 +49,15 @@ No build or install steps required!
 
 ### Settings
 You can toggle sound effects on/off using the sound switch. Your preference will be saved for future visits.
+
+## Recent Updates
+### New scoring system and clash avoidance
+- Added a smart scoring system: score multiplier increases as you shoot numbers closer to the bottom.
+- Push-back animation now prevents numbers from overlapping after a hit.
+
+---
+
+Enjoy the game and challenge yourself to get the highest score!
 
 ## License
 
