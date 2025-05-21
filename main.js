@@ -143,6 +143,11 @@ class FallingNumber {
         this.pushBackProgress = 0; // 0 to 1
         this.pushBackDuration = 0; // ms
         this.pushBackStartTime = 0;
+
+        this.trailLength = 8; // Shorter, subtler trail
+        this.trailSpacing = 10; // Slightly more spaced
+        this.trail = [];
+        this.lastTrailY = this.y;
     }
     update() {
         // Always recalculate speed based on current canvas height
@@ -166,15 +171,38 @@ class FallingNumber {
                 this.pushBackAnimating = false;
             }
         }
+
+        // Store trail positions at intervals for Matrix effect
+        if (Math.abs(this.y - this.lastTrailY) >= this.trailSpacing) {
+            this.trail.unshift(this.y);
+            this.lastTrailY = this.y;
+            if (this.trail.length > this.trailLength) {
+                this.trail.pop();
+            }
+        }
     }
     draw(ctx) {
-        // Dynamic font size based on canvas dimensions
+        // Subtle Matrix effect: faint white, minimal glow, monospace font, with subtle vertical trail
         const fontSize = Math.max(24, Math.min(48, canvas.width / 10));
-        
-        ctx.font = `bold ${fontSize}px Montserrat, Arial Black, Arial, sans-serif`;
-        ctx.fillStyle = '#fff';
+        ctx.save();
+        ctx.font = `bold ${fontSize}px 'Consolas', 'Courier New', monospace`;
         ctx.textAlign = 'center';
+        // Draw trail (extremely faint, minimal blur, white)
+        for (let t = this.trail.length - 1; t >= 0; t--) {
+            const alpha = 0.012 * (1 - t / (this.trail.length + 1)); // Extremely faint
+            ctx.globalAlpha = alpha;
+            ctx.fillStyle = '#fff';
+            ctx.shadowColor = '#fff';
+            ctx.shadowBlur = 0.5;
+            ctx.fillText(this.value, this.x, this.trail[t]);
+        }
+        // Draw main number (head, sharp, minimal glow, white)
+        ctx.globalAlpha = 0.98;
+        ctx.fillStyle = '#fff';
+        ctx.shadowColor = '#fff';
+        ctx.shadowBlur = 1;
         ctx.fillText(this.value, this.x, this.y);
+        ctx.restore();
     }
 }
 
@@ -574,7 +602,8 @@ let spawnInterval = getSpawnInterval();
 function gameLoop() {
     if (countdownActive) {
         return;
-    }    if (waitingForContinue) {
+    }
+    if (waitingForContinue) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         drawGrid(); // Add grid to the miss screen
         
@@ -591,7 +620,8 @@ function gameLoop() {
         ctx.fillText('Hit any key to continue', canvas.width / 2, canvas.height / 2 + (10 * scaleY));
         requestAnimationFrame(gameLoop); // Keep loop running
         return;
-    }    if (gameOver) {
+    }
+    if (gameOver) {
         // Draw Game Over message
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         drawGrid(); // Add grid to game over screen
@@ -624,18 +654,25 @@ function gameLoop() {
         
         showPlayAgainButton();
         return;
-    }hidePlayAgainButton();
+    }
+    hidePlayAgainButton();
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // Draw the grid
-    drawGrid();
+    // --- MATRIX TRAIL EFFECT ---
+    ctx.globalAlpha = 0.25;
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.globalAlpha = 1.0;
+    // --- END MATRIX TRAIL EFFECT ---
+
+    // Draw the grid (optional, comment out for pure Matrix look)
+    // drawGrid();
 
     // Update and draw all falling numbers
     for (let i = fallingNumbers.length - 1; i >= 0; i--) {
         const num = fallingNumbers[i];
         num.update();
-        num.draw(ctx);        // Use canvas height for boundary check
+        num.draw(ctx);
+        // Use canvas height for boundary check
         if (num.y > canvas.height + 40) {
             misses++;
             lives--;
@@ -655,7 +692,8 @@ function gameLoop() {
             requestAnimationFrame(gameLoop);
             return;
         }
-    }    // Show level message
+    }
+    // Show level message
     if (showLevelMessage && levelMessageTimer > 0) {
         const msgDiv = document.getElementById('level-message');
         if (msgDiv) {
