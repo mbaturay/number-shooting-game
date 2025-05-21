@@ -106,9 +106,6 @@ window.addEventListener('resize', function() {
         
         // X position is updated based on the stored relativeX value
         num.update();
-        
-        // Adjust the speed based on new canvas height
-        num.speed = 0.7 * (canvas.height / GAME_HEIGHT);
     });
     
     // Redraw immediately if we're in the game
@@ -133,12 +130,16 @@ class FallingNumber {
         this.x = padding + Math.random() * (canvas.width - padding * 2);
         this.y = -40 * (canvas.height / GAME_HEIGHT); // Scale starting position
         
-        // Set speed based on canvas height for consistent gameplay across screen sizes
-        this.speed = 0.7 * (canvas.height / GAME_HEIGHT);
+        // Store the logical speed (relative to GAME_HEIGHT)
+        this.baseSpeed = 0.7; // Default, will be set by spawnNewNumber
+        this.speed = this.baseSpeed * (canvas.height / GAME_HEIGHT);
         
         // Store the relative position (0-1 range) for better resizing
         this.relativeX = this.x / canvas.width;
-    }    update() {
+    }
+    update() {
+        // Always recalculate speed based on current canvas height
+        this.speed = this.baseSpeed * (canvas.height / GAME_HEIGHT);
         this.y += this.speed;
         
         // Update x position when window is resized
@@ -299,9 +300,10 @@ function updateStats() {
 
 function spawnNewNumber() {
     const num = new FallingNumber();
-    // Always use getFallSpeed() for all numbers, including level 1
-    // And scale the speed based on canvas height
-    num.speed = getFallSpeed() * (GAME_HEIGHT_SCALED / GAME_HEIGHT);
+    // Set the logical speed for this number (relative to GAME_HEIGHT)
+    num.baseSpeed = getFallSpeed();
+    // Initial speed for current canvas
+    num.speed = num.baseSpeed * (GAME_HEIGHT_SCALED / GAME_HEIGHT);
     fallingNumbers.push(num);
 }
 
